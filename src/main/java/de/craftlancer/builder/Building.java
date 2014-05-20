@@ -5,11 +5,13 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 
+import com.sk89q.worldedit.Countable;
 import com.sk89q.worldedit.CuboidClipboard;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.blocks.BaseBlock;
@@ -35,11 +37,11 @@ import com.sk89q.worldedit.schematic.SchematicFormat;
  */
 public class Building
 {
-    private Builder plugin;
-    private final String name;
-    private final List<String> alias;
-    private File file;
-    private String description;
+    private Builder plugin; //
+    private final String name; //
+    private final List<String> alias; //
+    private File file; //
+    private String description; //
     
     private Map<String, Object> costs;
     
@@ -56,9 +58,31 @@ public class Building
     private final int height;
     private final int lenght;
     
-    public Building()
+    @SuppressWarnings("deprecation")
+    public Building(Builder plugin, String key, FileConfiguration config)
     {
-        // TODO Auto-generated constructor stub
+        this.plugin = plugin;
+        this.name = key;
+        this.alias = config.getStringList("alias");
+        this.alias.add(key);
+        this.description = config.getString("description");
+        this.file = new File(plugin.getDataFolder(), "schematics" + File.separator + file);
+        
+        CuboidClipboard clip = getClipboard();
+        int blocks = 0;
+        for (Countable<Integer> i : clip.getBlockDistribution())
+        {
+            if (i.getID() == Material.AIR.getId())
+                continue;
+            
+            blocks += i.getAmount();
+        }
+        this.numBlocks = blocks;
+        
+        this.baseFacing = BlockFace.NORTH; //TODO
+        this.width = clip.getWidth();
+        this.height = clip.getHeight();
+        this.lenght = clip.getLength();
     }
     
     @SuppressWarnings("deprecation")
@@ -144,14 +168,14 @@ public class Building
         return name;
     }
     
-    public boolean addAlias(String alias)
+    public boolean addAlias(String string)
     {
-        return this.alias.add(alias);
+        return this.alias.add(string);
     }
     
-    public boolean removeAlias(String alias)
+    public boolean removeAlias(String string)
     {
-        return this.alias.remove(alias);
+        return this.alias.remove(string);
     }
     
     public File getFile()

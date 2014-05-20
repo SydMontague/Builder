@@ -23,13 +23,13 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import com.sk89q.worldedit.Countable;
 import com.sk89q.worldedit.CuboidClipboard;
 import com.sk89q.worldedit.LocalWorld;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.blocks.BaseBlock;
 
+import de.craftlancer.core.CraftItYourself;
 import de.craftlancer.core.MassChestInventory;
 import de.craftlancer.core.Utils;
 

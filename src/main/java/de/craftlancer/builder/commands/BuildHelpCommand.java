@@ -9,9 +9,9 @@ import de.craftlancer.core.command.SubCommand;
 public class BuildHelpCommand extends SubCommand
 {
     
-    public BuildHelpCommand(String permission, Plugin plugin, boolean console)
+    public BuildHelpCommand(String permission, Plugin plugin)
     {
-        super(permission, plugin, console);
+        super(permission, plugin, false);
         // TODO Auto-generated constructor stub
     }
     

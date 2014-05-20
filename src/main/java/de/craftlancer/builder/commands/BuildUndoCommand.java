@@ -9,9 +9,9 @@ import de.craftlancer.core.command.SubCommand;
 public class BuildUndoCommand extends SubCommand
 {
     
-    public BuildUndoCommand(String permission, Plugin plugin, boolean console)
+    public BuildUndoCommand(String permission, Plugin plugin)
     {
-        super(permission, plugin, console);
+        super(permission, plugin, false);
         // TODO Auto-generated constructor stub
     }
     
