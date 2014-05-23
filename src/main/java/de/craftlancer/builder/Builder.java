@@ -1,6 +1,7 @@
 package de.craftlancer.builder;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -11,6 +12,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitTask;
 
 import de.craftlancer.builder.commands.BuildCommandHandler;
 
@@ -30,13 +32,18 @@ import de.craftlancer.builder.commands.BuildCommandHandler;
  *      costs: <int> (use Vault)
  *          <CurrencyHandler Map> (use CurrencyHandler)
  *      build-type: <INSTANT/PROCEDUAL>
+ *      <IF build-type == PROCEDUAL>
+ *      ticks-per-run: <INT>
+ *      blocks-per-run: <INT>
+ *      <ENDIF>
+ *      check-space: <BOOLEAN>
  *      require-blocks: <BOOLEAN>
  *      use-inventory: <PLAYER/CHEST>
  *      add-progress-sign: <BOOLEAN>
  *      alias: <STRINGLIST> # for <building>
  *      description: <TEXT>
  *      facing <FACING> # help value //TODO remove help value
- *      
+ *
  *  Events:
  *      BuildingStartEvent
  *      BuildingProgressEvent?
@@ -59,13 +66,16 @@ public class Builder extends JavaPlugin implements Listener
     private FileConfiguration processConfig;
     
     private Map<String, Building> buildings = new HashMap<String, Building>();
-    private List<BuildingProcess> processes = new LinkedList<BuildingProcess>();
+    private Map<Integer, BuildingProcess> processes = new HashMap<Integer, BuildingProcess>();
+
+    private int buildingIndex = 1;
     
     @Override
     public void onEnable()
     {
         instance = this;
         loadManager();
+        
     }
     
     @Override
@@ -100,13 +110,19 @@ public class Builder extends JavaPlugin implements Listener
     
     private void loadProcesses()
     {
+        int maxId = 0;
         for (String key : processConfig.getKeys(false))
         {
+            int id = Integer.parseInt(key);
             BuildingProcess process = (BuildingProcess) processConfig.get(key);
             
-            processes.add(process);
+            processes.put(id, process);
             process.runTaskTimer(this, process.getBuilding().getTicksPerRun(), process.getBuilding().getTicksPerRun());
+            if (maxId < id)
+                maxId = id;
         }
+
+        buildingIndex = maxId + 1;
     }
     
     public static Builder getInstance()
@@ -117,5 +133,30 @@ public class Builder extends JavaPlugin implements Listener
     public Building getBuilding(String string)
     {
         return buildings.get(string);
+    }
+    
+    public Collection<Building> getBuildings()
+    {
+        return buildings.values();
+    }    
+    
+    public boolean hasBuilding(String name)
+    {
+        for (String b : buildings.keySet())
+            if (b.equalsIgnoreCase(name))
+                return true;
+        
+        return false;
+    }
+
+    public Map<Integer, BuildingProcess> getProcesses()
+    {
+        return processes;
+    }
+
+    public void addProcess(BuildingProcess process)
+    {
+        processes.put(buildingIndex, process);
+        buildingIndex++;
     }
 }

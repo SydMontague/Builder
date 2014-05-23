@@ -16,6 +16,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
+import org.bukkit.block.Sign;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -40,6 +41,7 @@ public class BuildingProcess extends BukkitRunnable implements ConfigurationSeri
     
     private Building building;
     private Block block;
+    private Sign sign;
     private MassChestInventory inventory;
     private int blocksPerRun;
     private List<BlockState> undoList = new ArrayList<BlockState>();
@@ -60,7 +62,7 @@ public class BuildingProcess extends BukkitRunnable implements ConfigurationSeri
     
     private int playerFacing;
         
-    public BuildingProcess(Building building, Player player, MassChestInventory inventory)
+    public BuildingProcess(Building building, Player player, MassChestInventory inventory, Sign sign)
     {
         this.owner = player.getUniqueId();
         this.building = building;
@@ -95,6 +97,7 @@ public class BuildingProcess extends BukkitRunnable implements ConfigurationSeri
         this.block = player.getLocation().getBlock().getRelative(schematic.getOffset().getBlockX(), 0, schematic.getOffset().getBlockZ());
         this.inventory = inventory;
         this.blocksPerRun = building.getBlockPerRun();
+        this.sign = sign;
         
         buildState = BuildState.BUILDING;
     }

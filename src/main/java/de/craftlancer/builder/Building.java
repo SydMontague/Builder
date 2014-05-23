@@ -8,8 +8,11 @@ import java.util.Map;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.Chest;
+import org.bukkit.block.Sign;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.material.MaterialData;
 
 import com.sk89q.worldedit.Countable;
 import com.sk89q.worldedit.CuboidClipboard;
@@ -17,6 +20,8 @@ import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.blocks.BaseBlock;
 import com.sk89q.worldedit.data.DataException;
 import com.sk89q.worldedit.schematic.SchematicFormat;
+
+import de.craftlancer.core.MassChestInventory;
 
 /*
  *  Building:
@@ -27,10 +32,10 @@ import com.sk89q.worldedit.schematic.SchematicFormat;
  *      <IF build-type == PROCEDUAL>
  *      ticks-per-run: <INT>
  *      blocks-per-run: <INT>
- *      <ENDIF>
- *      require-blocks: <BOOLEAN>
- *      use-inventory: <PLAYER/CHEST>
  *      add-progress-sign: <BOOLEAN>
+ *      require-blocks: <BOOLEAN>
+ *      <ENDIF>
+ *      checkSpace: <BOOLEAN>
  *      alias: <STRINGLIST> # for <building>
  *      description: <TEXT>
  *      facing <FACING> # help value //TODO remove help value
@@ -46,17 +51,17 @@ public class Building
     private Map<String, Object> costs;
     
     private BuildType buildtype;
-    private boolean requiresBlocks;
-    private boolean addProgressSign;
-    private boolean useChest;
+    private boolean requiresBlocks; //
+    private boolean addProgressSign; //
+    private boolean checkSpace; //
     private int ticksPerRun;
     private int blockPerRun;
     
     private final BlockFace baseFacing;     // TODO remove
-    private final int numBlocks;
-    private final int width;
-    private final int height;
-    private final int lenght;
+    private final int numBlocks; //
+    private final int width; //
+    private final int height; //
+    private final int lenght; //
     
     @SuppressWarnings("deprecation")
     public Building(Builder plugin, String key, FileConfiguration config)
@@ -67,6 +72,9 @@ public class Building
         this.alias.add(key);
         this.description = config.getString("description");
         this.file = new File(plugin.getDataFolder(), "schematics" + File.separator + file);
+        this.setCheckSpace(config.getBoolean("checkSpace", false));
+        this.addProgressSign = config.getBoolean("addProgressSign", false);
+        this.requiresBlocks = config.getBoolean("requiresBlocks", false);
         
         CuboidClipboard clip = getClipboard();
         int blocks = 0;
@@ -79,7 +87,7 @@ public class Building
         }
         this.numBlocks = blocks;
         
-        this.baseFacing = BlockFace.NORTH; //TODO
+        this.baseFacing = BlockFace.NORTH; // TODO
         this.width = clip.getWidth();
         this.height = clip.getHeight();
         this.lenght = clip.getLength();
@@ -141,9 +149,83 @@ public class Building
     
     public void startBuilding(Player player)
     {
-        
+        switch (buildtype)
+        {
+            case INSTANT:
+            case PROCEDUAL:
+            {
+                int facing = Math.abs((Math.round((player.getLocation().getYaw()) / 90)) % 4);
+                
+                int xFacing = 0;
+                int zFacing = 0;
+                BlockFace signFacing = null;
+                switch (facing)
+                {
+                    case 0: // SOUTH
+                        xFacing = -1;
+                        zFacing = 0;
+                        signFacing = BlockFace.NORTH;
+                        break;
+                    case 1: // WEST
+                        xFacing = 0;
+                        zFacing = -1;
+                        signFacing = BlockFace.EAST;
+                        break;
+                    case 2: // NORTH
+                        xFacing = 1;
+                        zFacing = 0;
+                        signFacing = BlockFace.SOUTH;
+                        break;
+                    case 3: // EAST
+                        xFacing = 0;
+                        zFacing = 1;
+                        signFacing = BlockFace.WEST;
+                        break;
+                }
+                
+                MassChestInventory inventory = null;
+                
+                Block block = player.getLocation().getBlock().getRelative(xFacing, 0, zFacing);
+                block.setType(Material.CHEST);
+                Block block2 = player.getLocation().getBlock().getRelative(xFacing * 2, 0, zFacing * 2);
+                block2.setType(Material.CHEST);
+                
+                // TODO we don't need a MassChestInventory when we only have a double chest
+                if (isRequiresBlocks())
+                    inventory = new MassChestInventory(getName(), getName(), ((Chest) block.getState()).getInventory(), ((Chest) block2.getState()).getInventory());
+                
+                Sign s = null;
+                if (isAddProgressSign())
+                {
+                    Block sign = player.getLocation().getBlock().getRelative(-xFacing, 0, -zFacing);
+                    sign.setType(Material.SIGN_POST);
+                    
+                    s = (Sign) sign.getState();
+                    MaterialData data = s.getData();
+                    ((org.bukkit.material.Sign) data).setFacingDirection(signFacing);
+                    s.setData(data);
+                    s.update();
+                }
+                
+                BuildingProcess process = new BuildingProcess(this, player, inventory, s);
+                process.runTaskTimer(getPlugin(), getTicksPerRun(), getTicksPerRun());
+                getPlugin().addProcess(process);
+                break;
+            }
+        }
     }
     
+    public boolean checkSpace(Player player)
+    {
+        // TODO Auto-generated method stub
+        return false;
+    }
+    
+    public boolean checkCosts(Player player)
+    {
+        // TODO Auto-generated method stub
+        return false;
+    }
     
     // getter and setter part
     public CuboidClipboard getClipboard()
@@ -163,7 +245,12 @@ public class Building
         return null;
     }
     
-        public String getName()
+    public Builder getPlugin()
+    {
+        return plugin;
+    }
+    
+    public String getName()
     {
         return name;
     }
@@ -238,16 +325,6 @@ public class Building
         this.addProgressSign = addProgressSign;
     }
     
-    public boolean isUseChest()
-    {
-        return useChest;
-    }
-    
-    public void setUseChest(boolean useChest)
-    {
-        this.useChest = useChest;
-    }
-    
     public int getTicksPerRun()
     {
         return ticksPerRun;
@@ -291,5 +368,20 @@ public class Building
     public int getLenght()
     {
         return lenght;
+    }
+    
+    public boolean isCheckSpace()
+    {
+        return checkSpace;
+    }
+    
+    public void setCheckSpace(boolean checkSpace)
+    {
+        this.checkSpace = checkSpace;
+    }
+    
+    public String getSizeString()
+    {
+        return width + "x" + height + "x" + lenght;
     }
 }
