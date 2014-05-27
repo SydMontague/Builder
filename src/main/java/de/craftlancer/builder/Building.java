@@ -2,6 +2,7 @@ package de.craftlancer.builder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +23,7 @@ import com.sk89q.worldedit.data.DataException;
 import com.sk89q.worldedit.schematic.SchematicFormat;
 
 import de.craftlancer.core.MassChestInventory;
+import de.craftlancer.currencyhandler.CurrencyHandler;
 
 /*
  *  Building:
@@ -63,6 +65,11 @@ public class Building
     private final int height; //
     private final int lenght; //
     
+    private CuboidClipboard r0Clip;
+    private CuboidClipboard r90Clip;
+    private CuboidClipboard r180Clip;
+    private CuboidClipboard r270Clip;
+    
     @SuppressWarnings("deprecation")
     public Building(Builder plugin, String key, FileConfiguration config)
     {
@@ -87,7 +94,7 @@ public class Building
         }
         this.numBlocks = blocks;
         
-        this.baseFacing = BlockFace.NORTH; // TODO
+        this.baseFacing = BlockFace.NORTH; // TODO remove
         this.width = clip.getWidth();
         this.height = clip.getHeight();
         this.lenght = clip.getLength();
@@ -190,7 +197,8 @@ public class Building
                 Block block2 = player.getLocation().getBlock().getRelative(xFacing * 2, 0, zFacing * 2);
                 block2.setType(Material.CHEST);
                 
-                // TODO we don't need a MassChestInventory when we only have a double chest
+                // TODO we don't need a MassChestInventory when we only have a
+                // double chest
                 if (isRequiresBlocks())
                     inventory = new MassChestInventory(getName(), getName(), ((Chest) block.getState()).getInventory(), ((Chest) block2.getState()).getInventory());
                 
@@ -217,14 +225,23 @@ public class Building
     
     public boolean checkSpace(Player player)
     {
+        if (!isCheckSpace())
+            return true;
+        
+        List<Material> ignoredMaterial = new ArrayList<Material>();
+        
         // TODO Auto-generated method stub
         return false;
     }
     
     public boolean checkCosts(Player player)
     {
-        // TODO Auto-generated method stub
-        return false;
+        if (getPlugin().useCurrencyHandler())
+            return CurrencyHandler.hasCurrencies(player, getCosts());
+        else if (getPlugin().getVault() != null && getCosts().containsKey("money"))
+            return getPlugin().getVault().has(player, (Integer) getCosts().get("money")); // TOTEST check if this type conversion works properly
+            
+        return getCosts().isEmpty();
     }
     
     // getter and setter part
