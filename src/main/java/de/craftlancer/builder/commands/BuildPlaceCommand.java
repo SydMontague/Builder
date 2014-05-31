@@ -15,7 +15,6 @@ public class BuildPlaceCommand extends SubCommand
     public BuildPlaceCommand(String permission, Plugin plugin)
     {
         super(permission, plugin, false);
-        // TODO Auto-generated constructor stub
     }
     
     @Override
@@ -37,10 +36,9 @@ public class BuildPlaceCommand extends SubCommand
         if(!build.checkCosts(player))
             return "Not enough money!";
         
-        //TODO add money, space etc. test
         build.startBuilding(player);
         
-        return "Bau gestartet!";
+        return "Building started!";
     }
     
     @Override

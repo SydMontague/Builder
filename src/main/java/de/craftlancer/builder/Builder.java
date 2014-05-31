@@ -1,9 +1,11 @@
 package de.craftlancer.builder;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import net.milkbowl.vault.economy.Economy;
 
@@ -42,7 +44,7 @@ import de.craftlancer.builder.commands.BuildCommandHandler;
  *      add-progress-sign: <BOOLEAN>
  *      alias: <STRINGLIST> # for <building>
  *      description: <TEXT>
- *      facing <FACING> # help value //TODO remove help value
+ *      facing <FACING> # help value
  *
  *  Events:
  *      BuildingStartEvent
@@ -59,8 +61,8 @@ public class Builder extends JavaPlugin implements Listener
 {
     private static Builder instance;
     
-    private File configFile;
-    private FileConfiguration config;
+    private File buildingFile;
+    private FileConfiguration buildingConfig;
     
     private File processFile;
     private FileConfiguration processConfig;
@@ -73,7 +75,7 @@ public class Builder extends JavaPlugin implements Listener
     private boolean useCurrencyHandler = false;
     private Economy vault;
     
-    //TODO cleaner economy implementation?
+    // TODO cleaner economy implementation?
     @Override
     public void onEnable()
     {
@@ -117,25 +119,49 @@ public class Builder extends JavaPlugin implements Listener
     
     private void loadManager()
     {
-        ConfigurationSerialization.registerClass(BuildingProcess.class);
+        ConfigurationSerialization.registerClass(ProcedualBuildingProcess.class);
         getServer().getPluginManager().registerEvents(this, this);
         
-        configFile = new File(getDataFolder(), "buildings.yml");
-        config = YamlConfiguration.loadConfiguration(configFile);
+        buildingFile = new File(getDataFolder(), "buildings.yml");
+        buildingConfig = YamlConfiguration.loadConfiguration(buildingFile);
         loadBuildings();
         
         processFile = new File(getDataFolder(), "processes.yml");
         processConfig = YamlConfiguration.loadConfiguration(processFile);
         loadProcesses();
         
-        getCommand("building").setExecutor(new BuildCommandHandler(this));
+        getCommand("build").setExecutor(new BuildCommandHandler(this));
     }
     
     private void loadBuildings()
     {
-        for (String key : config.getKeys(false))
+        for (String key : buildingConfig.getKeys(false))
         {
-            // TODO
+            Building build = new Building(this, key, buildingConfig.getConfigurationSection(key));
+            buildings.put(key, build);
+        }
+    }
+    
+    public void saveProcesses(boolean isShutdown)
+    {
+        for (String key : processConfig.getKeys(false))
+            processConfig.set(key, null);
+        
+        for (Entry<Integer, BuildingProcess> entry : processes.entrySet())
+            if (entry.getValue().getState() == BuildState.BUILDING)
+            {
+                if (isShutdown)
+                    entry.getValue().prepareForShutdown();
+                processConfig.set(entry.getKey().toString(), entry.getValue());
+            }
+        
+        try
+        {
+            processConfig.save(processFile);
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
         }
     }
     
@@ -145,7 +171,7 @@ public class Builder extends JavaPlugin implements Listener
         for (String key : processConfig.getKeys(false))
         {
             int id = Integer.parseInt(key);
-            BuildingProcess process = (BuildingProcess) processConfig.get(key);
+            ProcedualBuildingProcess process = (ProcedualBuildingProcess) processConfig.get(key);
             
             processes.put(id, process);
             process.runTaskTimer(this, process.getBuilding().getTicksPerRun(), process.getBuilding().getTicksPerRun());

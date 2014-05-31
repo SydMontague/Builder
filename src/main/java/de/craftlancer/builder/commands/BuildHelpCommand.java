@@ -12,7 +12,6 @@ public class BuildHelpCommand extends SubCommand
     public BuildHelpCommand(String permission, Plugin plugin)
     {
         super(permission, plugin, false);
-        // TODO Auto-generated constructor stub
     }
     
     @Override

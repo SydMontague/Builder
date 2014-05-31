@@ -1,0 +1,9 @@
+name: Builder
+main: de.craftlancer.builder.Builder
+version: {$project.version}
+description: Let your player place predefines schematics!
+soft-depend: [Vault, CurrencyHandler]
+commands:
+  build:
+    description: Build
+    usage: /building

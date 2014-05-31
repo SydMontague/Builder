@@ -3,6 +3,7 @@ package de.craftlancer.builder;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -11,7 +12,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Chest;
 import org.bukkit.block.Sign;
-import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.material.MaterialData;
 
@@ -22,7 +23,9 @@ import com.sk89q.worldedit.blocks.BaseBlock;
 import com.sk89q.worldedit.data.DataException;
 import com.sk89q.worldedit.schematic.SchematicFormat;
 
+import de.craftlancer.core.Direction;
 import de.craftlancer.core.MassChestInventory;
+import de.craftlancer.core.Utils;
 import de.craftlancer.currencyhandler.CurrencyHandler;
 
 /*
@@ -40,52 +43,61 @@ import de.craftlancer.currencyhandler.CurrencyHandler;
  *      checkSpace: <BOOLEAN>
  *      alias: <STRINGLIST> # for <building>
  *      description: <TEXT>
- *      facing <FACING> # help value //TODO remove help value
+ *      facing <FACING>
  */
 public class Building
 {
     private Builder plugin; //
     private final String name; //
-    private final List<String> alias; //
     private File file; //
     private String description; //
     
-    private Map<String, Object> costs;
+    private Map<String, Object> costs = new HashMap<String, Object>();
     
-    private BuildType buildtype;
+    private BuildType buildtype; //
     private boolean requiresBlocks; //
     private boolean addProgressSign; //
     private boolean checkSpace; //
     private int ticksPerRun;
     private int blockPerRun;
     
-    private final BlockFace baseFacing;     // TODO remove
+    private final Direction baseFacing; //
     private final int numBlocks; //
     private final int width; //
     private final int height; //
     private final int lenght; //
     
-    private CuboidClipboard r0Clip;
-    private CuboidClipboard r90Clip;
-    private CuboidClipboard r180Clip;
-    private CuboidClipboard r270Clip;
+    private CuboidClipboard r0Clip; //
+    private CuboidClipboard r90Clip; //
+    private CuboidClipboard r180Clip; //
+    private CuboidClipboard r270Clip; //
     
     @SuppressWarnings("deprecation")
-    public Building(Builder plugin, String key, FileConfiguration config)
+    public Building(Builder plugin, String key, ConfigurationSection config)
     {
         this.plugin = plugin;
         this.name = key;
-        this.alias = config.getStringList("alias");
-        this.alias.add(key);
         this.description = config.getString("description");
-        this.file = new File(plugin.getDataFolder(), "schematics" + File.separator + file);
-        this.setCheckSpace(config.getBoolean("checkSpace", false));
+        this.file = new File(plugin.getDataFolder(), "schematics" + File.separator + config.getString("schematic", "Gasthaus.schematic"));
+        this.checkSpace = config.getBoolean("checkSpace", false);
         this.addProgressSign = config.getBoolean("addProgressSign", false);
         this.requiresBlocks = config.getBoolean("requiresBlocks", false);
         
-        CuboidClipboard clip = getClipboard();
+        this.buildtype = BuildType.valueOf(config.getString("buildType", "INSTANT"));
+        
+        r0Clip = getClipboard();
+        
+        r90Clip = getClipboard();
+        r90Clip.rotate2D(90);
+        
+        r180Clip = getClipboard();
+        r180Clip.rotate2D(180);
+        
+        r270Clip = getClipboard();
+        r270Clip.rotate2D(270);
+        
         int blocks = 0;
-        for (Countable<Integer> i : clip.getBlockDistribution())
+        for (Countable<Integer> i : r0Clip.getBlockDistribution())
         {
             if (i.getID() == Material.AIR.getId())
                 continue;
@@ -94,10 +106,10 @@ public class Building
         }
         this.numBlocks = blocks;
         
-        this.baseFacing = BlockFace.NORTH; // TODO remove
-        this.width = clip.getWidth();
-        this.height = clip.getHeight();
-        this.lenght = clip.getLength();
+        this.baseFacing = Direction.valueOf(config.getString("facing", "SOUTH"));
+        this.width = r0Clip.getWidth();
+        this.height = r0Clip.getHeight();
+        this.lenght = r0Clip.getLength();
     }
     
     @SuppressWarnings("deprecation")
@@ -106,27 +118,7 @@ public class Building
         if (player == null || initialBlock == null || ticks <= 0)
             throw new IllegalArgumentException(player + " " + initialBlock + " " + ticks);
         
-        CuboidClipboard schematic = getClipboard();
-        
-        int facing = Math.abs((Math.round((player.getLocation().getYaw()) / 90)) % 4);
-        
-        switch (baseFacing)
-        {
-            case NORTH:
-                facing += 2;
-                break;
-            case EAST:
-                facing += 3;
-                break;
-            case SOUTH:
-                facing += 0;
-                break;
-            case WEST:
-                facing += 1;
-                break;
-            default:
-        }
-        schematic.rotate2D(facing * 90);
+        CuboidClipboard schematic = getRotatedClipboard(player);
         
         initialBlock = initialBlock.getRelative(schematic.getOffset().getBlockX(), 0, schematic.getOffset().getBlockZ());
         int xmax = schematic.getWidth();
@@ -159,31 +151,36 @@ public class Building
         switch (buildtype)
         {
             case INSTANT:
+            {
+                InstantBuildingProcess process = new InstantBuildingProcess(this, player);
+                getPlugin().addProcess(process);
+                break;
+            }
             case PROCEDUAL:
             {
-                int facing = Math.abs((Math.round((player.getLocation().getYaw()) / 90)) % 4);
+                Direction facing = Utils.getPlayerDirection(player);
                 
                 int xFacing = 0;
                 int zFacing = 0;
                 BlockFace signFacing = null;
                 switch (facing)
                 {
-                    case 0: // SOUTH
+                    case SOUTH:
                         xFacing = -1;
                         zFacing = 0;
                         signFacing = BlockFace.NORTH;
                         break;
-                    case 1: // WEST
+                    case WEST:
                         xFacing = 0;
                         zFacing = -1;
                         signFacing = BlockFace.EAST;
                         break;
-                    case 2: // NORTH
+                    case NORTH:
                         xFacing = 1;
                         zFacing = 0;
                         signFacing = BlockFace.SOUTH;
                         break;
-                    case 3: // EAST
+                    case EAST:
                         xFacing = 0;
                         zFacing = 1;
                         signFacing = BlockFace.WEST;
@@ -197,8 +194,7 @@ public class Building
                 Block block2 = player.getLocation().getBlock().getRelative(xFacing * 2, 0, zFacing * 2);
                 block2.setType(Material.CHEST);
                 
-                // TODO we don't need a MassChestInventory when we only have a
-                // double chest
+                // TODO we don't need a MassChestInventory when we only have a double chest
                 if (isRequiresBlocks())
                     inventory = new MassChestInventory(getName(), getName(), ((Chest) block.getState()).getInventory(), ((Chest) block2.getState()).getInventory());
                 
@@ -215,7 +211,7 @@ public class Building
                     s.update();
                 }
                 
-                BuildingProcess process = new BuildingProcess(this, player, inventory, s);
+                ProcedualBuildingProcess process = new ProcedualBuildingProcess(this, player, inventory, s);
                 process.runTaskTimer(getPlugin(), getTicksPerRun(), getTicksPerRun());
                 getPlugin().addProcess(process);
                 break;
@@ -230,8 +226,23 @@ public class Building
         
         List<Material> ignoredMaterial = new ArrayList<Material>();
         
-        // TODO Auto-generated method stub
-        return false;
+        CuboidClipboard schematic = getRotatedClipboard(player);
+        
+        Block initialBlock = player.getLocation().getBlock().getRelative(schematic.getOffset().getBlockX(), 0, schematic.getOffset().getBlockZ());
+        int xmax = schematic.getWidth();
+        int ymax = schematic.getHeight();
+        int zmax = schematic.getLength();
+        
+        for (int x = 0; x < xmax; x++)
+            for (int y = 0; y < ymax; y++)
+                for (int z = 0; z < zmax; z++)
+                {
+                    Material mat = initialBlock.getRelative(x, y, z).getType();
+                    if (mat != null && mat != Material.AIR && !ignoredMaterial.contains(mat))
+                        return false;
+                }
+        
+        return true;
     }
     
     public boolean checkCosts(Player player)
@@ -239,7 +250,7 @@ public class Building
         if (getPlugin().useCurrencyHandler())
             return CurrencyHandler.hasCurrencies(player, getCosts());
         else if (getPlugin().getVault() != null && getCosts().containsKey("money"))
-            return getPlugin().getVault().has(player, (Integer) getCosts().get("money")); // TOTEST check if this type conversion works properly
+            return getPlugin().getVault().has(player, ((Number) getCosts().get("money")).doubleValue()); // TOTEST check if this type conversion works properly
             
         return getCosts().isEmpty();
     }
@@ -262,6 +273,48 @@ public class Building
         return null;
     }
     
+    public CuboidClipboard getRotatedClipboard(Player player)
+    {
+        return getRotatedClipboard(Utils.getPlayerDirection(player));
+    }
+    
+    public CuboidClipboard getRotatedClipboard(Direction facing)
+    {
+        int base;
+        
+        switch (baseFacing)
+        {
+            case NORTH:
+                base = 2;
+                break;
+            case EAST:
+                base = 3;
+                break;
+            case SOUTH:
+                base = 0;
+                break;
+            case WEST:
+                base = 1;
+                break;
+            default:
+                base = 0;
+        }
+        
+        switch ((facing.getIntValue() - base + 4) % 4)
+        {
+            case 0:
+                return r0Clip;
+            case 1:
+                return r90Clip;
+            case 2:
+                return r180Clip;
+            case 3:
+                return r270Clip;
+            default:
+                return r0Clip;
+        }
+    }
+    
     public Builder getPlugin()
     {
         return plugin;
@@ -270,16 +323,6 @@ public class Building
     public String getName()
     {
         return name;
-    }
-    
-    public boolean addAlias(String string)
-    {
-        return this.alias.add(string);
-    }
-    
-    public boolean removeAlias(String string)
-    {
-        return this.alias.remove(string);
     }
     
     public File getFile()
@@ -362,7 +405,7 @@ public class Building
         this.blockPerRun = blockPerRun;
     }
     
-    public BlockFace getFacing()
+    public Direction getFacing()
     {
         return baseFacing;
     }
