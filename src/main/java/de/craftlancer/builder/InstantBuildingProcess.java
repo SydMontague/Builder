@@ -24,7 +24,7 @@ public class InstantBuildingProcess implements BuildingProcess
     
     public InstantBuildingProcess(Building building, Player player)
     {
-        this.owner = player.getUniqueId();
+        owner = player.getUniqueId();
         this.building = building;
         
         CuboidClipboard clip = building.getRotatedClipboard(player);
@@ -52,7 +52,7 @@ public class InstantBuildingProcess implements BuildingProcess
                     world.setBlock(new Vector(start.getX() + x, start.getY() + y, start.getZ() + z), b, false);
                 }
         
-        this.buildState = BuildState.FINISHED;
+        buildState = BuildState.FINISHED;
     }
     
     @Override
@@ -92,6 +92,6 @@ public class InstantBuildingProcess implements BuildingProcess
     @Override
     public void prepareForShutdown()
     {
-        //do nothing
+        // do nothing
     }
 }

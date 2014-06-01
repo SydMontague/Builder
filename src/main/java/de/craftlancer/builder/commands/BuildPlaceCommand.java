@@ -30,10 +30,10 @@ public class BuildPlaceCommand extends SubCommand
         
         Player player = (Player) sender;
 
-        if(build.isCheckSpace() && !build.checkSpace(player))
+        if (build.isCheckSpace() && !build.checkSpace(player))
             return "Not enough space!";
         
-        if(!build.checkCosts(player))
+        if (!build.checkCosts(player))
             return "Not enough money!";
         
         build.startBuilding(player);

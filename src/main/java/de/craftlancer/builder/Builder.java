@@ -26,9 +26,9 @@ import de.craftlancer.builder.commands.BuildCommandHandler;
  *  /build place <building>
  *  /build undo
  *  /build progress
- *  
+ *
  *  AdminCommands? (create, set, remove)
- *  
+ *
  *  Building:
  *      schematic: <FILE> # relative to #getPluginFolder()/schematics/
  *      costs: <int> (use Vault)
@@ -50,12 +50,12 @@ import de.craftlancer.builder.commands.BuildCommandHandler;
  *      BuildingStartEvent
  *      BuildingProgressEvent?
  *      BuildingFinishEvent
- *      
+ *
  *  CLCore Modules?:
  *      CraftItYourself
  *      MassChestInventory
  *      CommandHandler
- *      
+ *
  */
 public class Builder extends JavaPlugin implements Listener
 {
@@ -81,7 +81,7 @@ public class Builder extends JavaPlugin implements Listener
     {
         instance = this;
         
-        if (this.getServer().getPluginManager().getPlugin("CurrencyHandler") != null)
+        if (getServer().getPluginManager().getPlugin("CurrencyHandler") != null)
             useCurrencyHandler = true;
         else
         {

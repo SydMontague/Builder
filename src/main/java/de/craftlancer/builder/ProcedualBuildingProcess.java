@@ -38,7 +38,6 @@ import de.craftlancer.core.Utils;
 
 public class ProcedualBuildingProcess extends BukkitRunnable implements ConfigurationSerializable, BuildingProcess
 {
-    // TODO update serialization to latest development
     // TOTEST save to config when not finished
     private UUID owner;
     
@@ -67,19 +66,19 @@ public class ProcedualBuildingProcess extends BukkitRunnable implements Configur
     
     public ProcedualBuildingProcess(Building building, Player player, MassChestInventory inventory, Sign sign)
     {
-        this.owner = player.getUniqueId();
+        owner = player.getUniqueId();
         this.building = building;
-        this.schematic = building.getRotatedClipboard(player);
+        schematic = building.getRotatedClipboard(player);
         
-        this.playerFacing = Utils.getPlayerDirection(player);
+        playerFacing = Utils.getPlayerDirection(player);
         
         xmax = schematic.getWidth() - 1;
         ymax = schematic.getHeight() - 1;
         zmax = schematic.getLength() - 1;
         
-        this.block = player.getLocation().getBlock().getRelative(schematic.getOffset().getBlockX(), 0, schematic.getOffset().getBlockZ());
+        block = player.getLocation().getBlock().getRelative(schematic.getOffset().getBlockX(), 0, schematic.getOffset().getBlockZ());
         this.inventory = inventory;
-        this.blocksPerRun = building.getBlockPerRun();
+        blocksPerRun = building.getBlockPerRun();
         this.sign = sign;
         
         if (sign != null)
@@ -108,7 +107,7 @@ public class ProcedualBuildingProcess extends BukkitRunnable implements Configur
     @Override
     public void prepareForShutdown()
     {
-        this.cancel();
+        cancel();
         for (BlockState state : undoList)
             state.update(true);
     }
@@ -133,8 +132,6 @@ public class ProcedualBuildingProcess extends BukkitRunnable implements Configur
             
             initialCosts = initialsLeft;
             
-            for (ItemStack item : initialsLeft)
-                Bukkit.getLogger().info(item.getType().name());
             return;
         }
         
@@ -287,6 +284,17 @@ public class ProcedualBuildingProcess extends BukkitRunnable implements Configur
         return blocksSet;
     }
     
+    /*
+     * //owner(non-Javadoc)
+     * //building
+     * //block
+     * //sign
+     * //inventory
+     * //blocksPerRun
+     * //blocksSet
+     * //playerFacing
+     * initialCosts
+     */
     @Override
     public Map<String, Object> serialize()
     {
@@ -295,6 +303,7 @@ public class ProcedualBuildingProcess extends BukkitRunnable implements Configur
         map.put("owner", owner.toString());
         map.put("building", building.getName());
         map.put("block", Utils.getLocationString(block.getLocation()));
+        map.put("sign", Utils.getLocationString(sign.getLocation()));
         
         Set<String> list = new HashSet<String>();
         for (Inventory inv : inventory.getInventories())
@@ -313,28 +322,57 @@ public class ProcedualBuildingProcess extends BukkitRunnable implements Configur
         map.put("blocksPerTick", blocksPerRun);
         map.put("blocksSet", blocksSet);
         map.put("playerFacing", playerFacing);
+        map.put("initialCosts", initialCosts);
         
         return map;
     }
     
+    /*
+     * //private UUID owner;
+     * //private Building building;
+     * //private Block block;
+     * //private Sign sign;
+     * //private MassChestInventory inventory;
+     * //private int blocksPerRun;
+     * //private List<BlockState> undoList = new ArrayList<BlockState>();
+     * //private CuboidClipboard schematic;
+     * //private List<ItemStack> initialCosts = new ArrayList<ItemStack>();
+     * //private Map<Material, Integer> alreadyPaid = new HashMap<Material, Integer>();
+     * //private BuildState buildState;
+     * //private int blocksSet = 0;
+     * //private int x = 0;
+     * //private int y = 0;
+     * //private int z = 0;
+     * //private int xmax;
+     * //private int ymax;
+     * //private int zmax;
+     * //private Direction playerFacing;
+     */
+    // owner, building, block, sign, inventory, blocksPerRun, initialCosts, blocksSet, facing
     /**
      * Deserialize
-     * 
+     *
      * @param map
      */
+    @SuppressWarnings("unchecked")
     public ProcedualBuildingProcess(Map<String, Object> map)
     {
-        String[] arr = { "owner", "building", "block", "inventory", "blocksPerTick", "blocksSet", "playerFacing" };
+        String[] arr = { "owner", "building", "block", "sign", "inventory", "blocksPerRun", "blocksSet", "playerFacing" };
         
         for (String key : arr)
             if (!map.containsKey(key))
                 throw new IllegalArgumentException("The given map is not suitable to be deserialized to a BuildingProcess");
         
-        owner = UUID.fromString("owner");
+        owner = UUID.fromString(map.get("owner").toString());
         building = Builder.getInstance().getBuilding(map.get("building").toString());
-        schematic = building.getClipboard();
         
         block = Utils.parseLocation(map.get("block").toString()).getBlock();
+        sign = (Sign) Utils.parseLocation(map.get("block").toString()).getBlock().getState();
+        
+        if (map.containsKey("initialCosts"))
+            for (ItemStack item : (List<ItemStack>) map.get("initialCosts"))
+                initialCosts.add(item);
+        
         Object o = map.get("inventory");
         
         Set<Inventory> inv = new HashSet<Inventory>();
@@ -343,11 +381,11 @@ public class ProcedualBuildingProcess extends BukkitRunnable implements Configur
         
         inventory = new MassChestInventory(building.getName(), building.getName(), inv);
         
-        blocksPerRun = (Integer) map.get("blocksPerTick");
+        blocksPerRun = (Integer) map.get("blocksPerRun");
         
         playerFacing = Direction.valueOf(map.get("playerFacing").toString());
         
-        this.schematic = building.getRotatedClipboard(playerFacing);
+        schematic = building.getRotatedClipboard(playerFacing);
         
         xmax = schematic.getWidth() - 1;
         ymax = schematic.getHeight() - 1;
@@ -372,7 +410,7 @@ public class ProcedualBuildingProcess extends BukkitRunnable implements Configur
             {
                 buildState = BuildState.FINISHED;
                 
-                this.blocksSet++;
+                blocksSet++;
                 return;
             }
             
@@ -403,9 +441,9 @@ public class ProcedualBuildingProcess extends BukkitRunnable implements Configur
             else
                 x++;
             
-            this.blocksSet++;
+            blocksSet++;
         }
         
-        this.buildState = BuildState.BUILDING;
+        buildState = BuildState.BUILDING;
     }
 }

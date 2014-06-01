@@ -76,14 +76,14 @@ public class Building
     public Building(Builder plugin, String key, ConfigurationSection config)
     {
         this.plugin = plugin;
-        this.name = key;
-        this.description = config.getString("description");
-        this.file = new File(plugin.getDataFolder(), "schematics" + File.separator + config.getString("schematic", "Gasthaus.schematic"));
-        this.checkSpace = config.getBoolean("checkSpace", false);
-        this.addProgressSign = config.getBoolean("addProgressSign", false);
-        this.requiresBlocks = config.getBoolean("requiresBlocks", false);
+        name = key;
+        description = config.getString("description");
+        file = new File(plugin.getDataFolder(), "schematics" + File.separator + config.getString("schematic", "Gasthaus.schematic"));
+        checkSpace = config.getBoolean("checkSpace", false);
+        addProgressSign = config.getBoolean("addProgressSign", false);
+        requiresBlocks = config.getBoolean("requiresBlocks", false);
         
-        this.buildtype = BuildType.valueOf(config.getString("buildType", "INSTANT"));
+        buildtype = BuildType.valueOf(config.getString("buildType", "INSTANT"));
         
         r0Clip = getClipboard();
         
@@ -104,12 +104,12 @@ public class Building
             
             blocks += i.getAmount();
         }
-        this.numBlocks = blocks;
+        numBlocks = blocks;
         
-        this.baseFacing = Direction.valueOf(config.getString("facing", "SOUTH"));
-        this.width = r0Clip.getWidth();
-        this.height = r0Clip.getHeight();
-        this.lenght = r0Clip.getLength();
+        baseFacing = Direction.valueOf(config.getString("facing", "SOUTH"));
+        width = r0Clip.getWidth();
+        height = r0Clip.getHeight();
+        lenght = r0Clip.getLength();
     }
     
     @SuppressWarnings("deprecation")
