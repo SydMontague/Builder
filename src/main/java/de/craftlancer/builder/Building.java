@@ -52,7 +52,7 @@ public class Building
     private File file; //
     private String description; //
     
-    private Map<String, Object> costs = new HashMap<String, Object>();
+    private HashMap<String, Object> costs = new HashMap<String, Object>();
     
     private BuildType buildtype; //
     private boolean requiresBlocks; //
@@ -84,6 +84,18 @@ public class Building
         requiresBlocks = config.getBoolean("requiresBlocks", false);
         ticksPerRun = config.getInt("ticksPerRun", 20);
         blocksPerRun = config.getInt("blocksPerRun", 10);
+        
+        if (config.isDouble("costs"))
+        {
+            costs = new HashMap<String, Object>();
+            costs.put("money", config.getDouble("costs"));
+        }
+        else if (config.isConfigurationSection("costs"))
+        {
+            costs.putAll(config.getConfigurationSection("costs").getValues(false));
+            if(plugin.useCurrencyHandler())
+                CurrencyHandler.convertCurrencies(costs);
+        }
         
         buildtype = BuildType.valueOf(config.getString("buildType", "INSTANT"));
         
@@ -352,7 +364,7 @@ public class Building
         return costs;
     }
     
-    public void setCosts(Map<String, Object> costs)
+    public void setCosts(HashMap<String, Object> costs)
     {
         this.costs = costs;
     }
