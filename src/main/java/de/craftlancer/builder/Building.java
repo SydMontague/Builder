@@ -58,8 +58,8 @@ public class Building
     private boolean requiresBlocks; //
     private boolean addProgressSign; //
     private boolean checkSpace; //
-    private int ticksPerRun;
-    private int blockPerRun;
+    private int ticksPerRun; //
+    private int blocksPerRun; //
     
     private final Direction baseFacing; //
     private final int numBlocks; //
@@ -82,6 +82,8 @@ public class Building
         checkSpace = config.getBoolean("checkSpace", false);
         addProgressSign = config.getBoolean("addProgressSign", false);
         requiresBlocks = config.getBoolean("requiresBlocks", false);
+        ticksPerRun = config.getInt("ticksPerRun", 20);
+        blocksPerRun = config.getInt("blocksPerRun", 10);
         
         buildtype = BuildType.valueOf(config.getString("buildType", "INSTANT"));
         
@@ -397,12 +399,12 @@ public class Building
     
     public int getBlockPerRun()
     {
-        return blockPerRun;
+        return blocksPerRun;
     }
     
     public void setBlockPerRun(int blockPerRun)
     {
-        this.blockPerRun = blockPerRun;
+        this.blocksPerRun = blockPerRun;
     }
     
     public Direction getFacing()
