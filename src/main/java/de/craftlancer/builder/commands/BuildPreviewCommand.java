@@ -29,7 +29,7 @@ public class BuildPreviewCommand extends SubCommand
         Building build = getPlugin().getBuilding(args[1]);
         build.createPreview((Player) sender);
         
-        return "Zeige Vorschau des Gebäudes \"" + build.getName() + "\""; // TODO externalise
+        return "Showing preview for building \"" + build.getName() + "\""; // TODO externalise
     }
     
     @Override
