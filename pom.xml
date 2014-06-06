@@ -123,7 +123,7 @@
               <relocations>
                 <relocation>
                   <pattern>org.mcstats</pattern>
-                  <shadedPattern>de.craftlancer.buyskills.metrics</shadedPattern>
+                  <shadedPattern>de.craftlancer.builder.metrics</shadedPattern>
                 </relocation>
               </relocations>
 
