@@ -8,6 +8,7 @@ import org.bukkit.plugin.Plugin;
 import de.craftlancer.builder.Builder;
 import de.craftlancer.builder.Building;
 import de.craftlancer.core.command.SubCommand;
+import de.craftlancer.currencyhandler.CurrencyHandler;
 
 public class BuildPlaceCommand extends SubCommand
 {
@@ -36,15 +37,16 @@ public class BuildPlaceCommand extends SubCommand
         if (!build.checkCosts(player))
             return "Not enough money!";
         
+        CurrencyHandler.withdrawCurrencies(player, build.getCosts());
         build.startBuilding(player);
-        
+                
         return "Building started!";
     }
     
     @Override
     public void help(CommandSender sender)
     {
-        // TODO Auto-generated method stub
+        // TODO help output
         
     }
 

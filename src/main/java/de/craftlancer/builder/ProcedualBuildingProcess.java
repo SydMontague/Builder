@@ -64,6 +64,8 @@ public class ProcedualBuildingProcess extends BukkitRunnable implements Configur
     
     private Direction playerFacing;
     
+    private Material missing;
+    
     public ProcedualBuildingProcess(Building building, Player player, MassChestInventory inventory, Sign sign)
     {
         owner = player.getUniqueId();
@@ -84,7 +86,7 @@ public class ProcedualBuildingProcess extends BukkitRunnable implements Configur
         if (sign != null)
         {
             sign.setLine(0, getBuilding().getName());
-            sign.setLine(3, String.valueOf(getBuilding().getNumBlocks()));
+            sign.update();
         }
         
         buildState = BuildState.BUILDING;
@@ -96,11 +98,18 @@ public class ProcedualBuildingProcess extends BukkitRunnable implements Configur
         for (BlockState state : undoList)
             state.update(true);
         
-        for (Entry<Material, Integer> entry : alreadyPaid.entrySet())
-            if (entry.getKey() != Material.AIR)
-                block.getWorld().dropItem(block.getLocation(), new ItemStack(entry.getKey(), entry.getValue()));
+        if (building.isRequiresBlocks())
+            for (Entry<Material, Integer> entry : alreadyPaid.entrySet())
+                if (entry.getKey() != Material.AIR)
+                    block.getWorld().dropItem(block.getLocation(), new ItemStack(entry.getKey(), entry.getValue()));
         
         undoList.clear();
+        if (sign != null)
+        {
+            sign.setType(Material.AIR);
+            sign.update();
+        }
+        
         buildState = BuildState.REMOVED;
     }
     
@@ -116,6 +125,7 @@ public class ProcedualBuildingProcess extends BukkitRunnable implements Configur
     @Override
     public void run()
     {
+        updateSign();
         if (buildState != BuildState.BUILDING)
         {
             cancel();
@@ -175,7 +185,10 @@ public class ProcedualBuildingProcess extends BukkitRunnable implements Configur
                 }
             }
             else
-                break;
+            {
+                missing = Material.matchMaterial(String.valueOf(b.getType()));
+                return;
+            }
             
             if (x == xmax)
             {
@@ -193,37 +206,40 @@ public class ProcedualBuildingProcess extends BukkitRunnable implements Configur
             
             blocksSet++;
         }
-        
-        updateSign();
     }
     
     /*
      * Gasthaus - Name
      * [==========] - Progress
-     * 100 of - Blocks Set
-     * 1000 - Blocks to Set
+     * 100/1000 - Blocks Set/Blocks Total
+     * STONE - Missing Material
      */
     private void updateSign()
     {
         if (sign == null)
             return;
         
+        int BARS = 8;
+        
         int blockSet = getBlocksSet();
-        int blockTotal = getBuilding().getNumBlocks();
+        int blockTotal = getBuilding().getVolume();
         double ratio = (double) blockSet / blockTotal;
+        
+        int i = 0;
         
         StringBuilder message = new StringBuilder();
         message.append(" [").append(ChatColor.GREEN);
-        for (int i = 0; i < ratio * 10; i++)
+        for (; i < ratio * BARS; i++)
             message.append("=");
-        message.append(ChatColor.WHITE);
-        for (int i = 0; i < 10 - ratio * 10; i++)
+        message.append(ChatColor.RESET);
+        for (; i < BARS; i++)
             message.append("=");
-        message.append("] ").append((int) (ratio * 100)).append("% ").append(blockSet).append("/").append(blockTotal);
+        message.append("] ");
         
         sign.setLine(1, message.toString());
-        sign.setLine(2, getBlocksSet() + " of");
-        
+        sign.setLine(2, getBlocksSet() + "/" + blockTotal);
+        sign.setLine(3, missing == null ? "" : missing.name());
+        sign.update();
     }
     
     private void increasePaid(Material matchMaterial)
@@ -234,6 +250,7 @@ public class ProcedualBuildingProcess extends BukkitRunnable implements Configur
         alreadyPaid.put(matchMaterial, alreadyPaid.get(matchMaterial) + 1);
     }
     
+    @Override
     public boolean isProtected(Block b)
     {
         if (buildState != BuildState.BUILDING)
@@ -247,9 +264,10 @@ public class ProcedualBuildingProcess extends BukkitRunnable implements Configur
         return false;
     }
     
+    @Override
     public boolean changedFinished(Block b)
     {
-        if (buildState != BuildState.FINISHED)
+        if(buildState != BuildState.FINISHED)
             return false;
         
         if (b.getX() >= block.getX() && b.getX() <= block.getX() + xmax)
@@ -284,17 +302,6 @@ public class ProcedualBuildingProcess extends BukkitRunnable implements Configur
         return blocksSet;
     }
     
-    /*
-     * //owner(non-Javadoc)
-     * //building
-     * //block
-     * //sign
-     * //inventory
-     * //blocksPerRun
-     * //blocksSet
-     * //playerFacing
-     * initialCosts
-     */
     @Override
     public Map<String, Object> serialize()
     {
@@ -306,49 +313,28 @@ public class ProcedualBuildingProcess extends BukkitRunnable implements Configur
         map.put("sign", Utils.getLocationString(sign.getLocation()));
         
         Set<String> list = new HashSet<String>();
-        for (Inventory inv : inventory.getInventories())
-        {
-            InventoryHolder holder = inv.getHolder();
-            if (holder instanceof DoubleChest)
+        if (inventory != null)
+            for (Inventory inv : inventory.getInventories())
             {
-                list.add(Utils.getLocationString(((Chest) ((DoubleChest) holder).getLeftSide()).getLocation()));
-                list.add(Utils.getLocationString(((Chest) ((DoubleChest) holder).getRightSide()).getLocation()));
+                InventoryHolder holder = inv.getHolder();
+                if (holder instanceof DoubleChest)
+                {
+                    list.add(Utils.getLocationString(((Chest) ((DoubleChest) holder).getLeftSide()).getLocation()));
+                    list.add(Utils.getLocationString(((Chest) ((DoubleChest) holder).getRightSide()).getLocation()));
+                }
+                else
+                    list.add(Utils.getLocationString(((Chest) holder).getLocation()));
             }
-            else
-                list.add(Utils.getLocationString(((Chest) holder).getLocation()));
-        }
         
         map.put("inventory", new ArrayList<String>(list));
-        map.put("blocksPerTick", blocksPerRun);
+        map.put("blocksPerRun", blocksPerRun);
         map.put("blocksSet", blocksSet);
-        map.put("playerFacing", playerFacing);
+        map.put("playerFacing", playerFacing.name());
         map.put("initialCosts", initialCosts);
         
         return map;
     }
     
-    /*
-     * //private UUID owner;
-     * //private Building building;
-     * //private Block block;
-     * //private Sign sign;
-     * //private MassChestInventory inventory;
-     * //private int blocksPerRun;
-     * //private List<BlockState> undoList = new ArrayList<BlockState>();
-     * //private CuboidClipboard schematic;
-     * //private List<ItemStack> initialCosts = new ArrayList<ItemStack>();
-     * //private Map<Material, Integer> alreadyPaid = new HashMap<Material, Integer>();
-     * //private BuildState buildState;
-     * //private int blocksSet = 0;
-     * //private int x = 0;
-     * //private int y = 0;
-     * //private int z = 0;
-     * //private int xmax;
-     * //private int ymax;
-     * //private int zmax;
-     * //private Direction playerFacing;
-     */
-    // owner, building, block, sign, inventory, blocksPerRun, initialCosts, blocksSet, facing
     /**
      * Deserialize
      *
@@ -357,7 +343,7 @@ public class ProcedualBuildingProcess extends BukkitRunnable implements Configur
     @SuppressWarnings("unchecked")
     public ProcedualBuildingProcess(Map<String, Object> map)
     {
-        String[] arr = { "owner", "building", "block", "sign", "inventory", "blocksPerRun", "blocksSet", "playerFacing" };
+        String[] arr = { "owner", "building", "block", "sign", "blocksPerRun", "blocksSet", "playerFacing" };
         
         for (String key : arr)
             if (!map.containsKey(key))
@@ -367,7 +353,7 @@ public class ProcedualBuildingProcess extends BukkitRunnable implements Configur
         building = Builder.getInstance().getBuilding(map.get("building").toString());
         
         block = Utils.parseLocation(map.get("block").toString()).getBlock();
-        sign = (Sign) Utils.parseLocation(map.get("block").toString()).getBlock().getState();
+        sign = (Sign) Utils.parseLocation(map.get("sign").toString()).getBlock().getState();
         
         if (map.containsKey("initialCosts"))
             for (ItemStack item : (List<ItemStack>) map.get("initialCosts"))
@@ -379,7 +365,7 @@ public class ProcedualBuildingProcess extends BukkitRunnable implements Configur
         for (Object obj : (List<?>) o)
             inv.add(((Chest) Utils.parseLocation(obj.toString()).getBlock().getState()).getInventory());
         
-        inventory = new MassChestInventory(building.getName(), building.getName(), inv);
+        inventory = inv.isEmpty() ? null : new MassChestInventory(building.getName(), building.getName(), inv);
         
         blocksPerRun = (Integer) map.get("blocksPerRun");
         

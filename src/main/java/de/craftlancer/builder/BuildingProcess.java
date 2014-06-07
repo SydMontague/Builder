@@ -2,6 +2,8 @@ package de.craftlancer.builder;
 
 import java.util.UUID;
 
+import org.bukkit.block.Block;
+
 public interface BuildingProcess
 {
     public void undo();
@@ -15,4 +17,8 @@ public interface BuildingProcess
     public Building getBuilding();
     
     public BuildState getState();
+
+    public boolean isProtected(Block block);
+
+    public boolean changedFinished(Block block);
 }

@@ -6,7 +6,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -52,7 +54,7 @@ public class Building
     private File file; //
     private String description; //
     
-    private HashMap<String, Object> costs = new HashMap<String, Object>();
+    private HashMap<String, Object> costs = new HashMap<String, Object>(); //
     
     private BuildType buildtype; //
     private boolean requiresBlocks; //
@@ -66,6 +68,7 @@ public class Building
     private final int width; //
     private final int height; //
     private final int lenght; //
+    private final int volume;
     
     private CuboidClipboard r0Clip; //
     private CuboidClipboard r90Clip; //
@@ -89,12 +92,24 @@ public class Building
         {
             costs = new HashMap<String, Object>();
             costs.put("money", config.getDouble("costs"));
+            Bukkit.getLogger().info("1");
         }
         else if (config.isConfigurationSection("costs"))
         {
+            Bukkit.getLogger().info("2");
             costs.putAll(config.getConfigurationSection("costs").getValues(false));
-            if(plugin.useCurrencyHandler())
+            
+            for (Entry<String, Object> a : costs.entrySet())
+                Bukkit.getLogger().info(a.getKey() + " " + a.getValue());
+            
+            if (plugin.useCurrencyHandler())
+            {
+                Bukkit.getLogger().info("3");
                 CurrencyHandler.convertCurrencies(costs);
+            }
+            
+            for (Entry<String, Object> a : costs.entrySet())
+                Bukkit.getLogger().info(a.getKey() + " " + a.getValue());
         }
         
         buildtype = BuildType.valueOf(config.getString("buildType", "INSTANT"));
@@ -124,6 +139,7 @@ public class Building
         width = r0Clip.getWidth();
         height = r0Clip.getHeight();
         lenght = r0Clip.getLength();
+        volume = width * height * lenght;
     }
     
     @SuppressWarnings("deprecation")
@@ -203,16 +219,18 @@ public class Building
                 
                 MassChestInventory inventory = null;
                 
-                Block block = player.getLocation().getBlock().getRelative(xFacing, 0, zFacing);
-                block.setType(Material.CHEST);
-                Block block2 = player.getLocation().getBlock().getRelative(xFacing * 2, 0, zFacing * 2);
-                block2.setType(Material.CHEST);
-                
-                // TODO we don't need a MassChestInventory when we only have a double chest
                 if (isRequiresBlocks())
+                {
+                    Block block = player.getLocation().getBlock().getRelative(xFacing, 0, zFacing);
+                    block.setType(Material.CHEST);
+                    Block block2 = player.getLocation().getBlock().getRelative(xFacing * 2, 0, zFacing * 2);
+                    block2.setType(Material.CHEST);
+                    
                     inventory = new MassChestInventory(getName(), getName(), ((Chest) block.getState()).getInventory(), ((Chest) block2.getState()).getInventory());
+                }
                 
                 Sign s = null;
+                
                 if (isAddProgressSign())
                 {
                     Block sign = player.getLocation().getBlock().getRelative(-xFacing, 0, -zFacing);
@@ -427,6 +445,11 @@ public class Building
     public int getNumBlocks()
     {
         return numBlocks;
+    }
+    
+    public int getVolume()
+    {
+        return volume;
     }
     
     public int getWidth()

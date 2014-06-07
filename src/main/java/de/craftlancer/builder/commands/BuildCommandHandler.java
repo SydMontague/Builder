@@ -27,7 +27,7 @@ public class BuildCommandHandler extends CommandHandler
     public BuildCommandHandler(Plugin plugin)
     {
         super(plugin);
-        registerSubCommand("help", new BuildHelpCommand(HELP_PERMISSION, plugin));
+        registerSubCommand("help", new BuildHelpCommand(HELP_PERMISSION, plugin, getCommands()));
         registerSubCommand("list", new BuildListCommand(LIST_PERMISSION, plugin));
         registerSubCommand("preview", new BuildPreviewCommand(PREVIEW_PERMISSION, plugin));
         registerSubCommand("place", new BuildPlaceCommand(PLACE_PERMISSION, plugin));

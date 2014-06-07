@@ -37,15 +37,18 @@ public class BuildProgressCommand extends SubCommand
                 continue;
             
             int blockSet = process.getBlocksSet();
-            int blockTotal = process.getBuilding().getNumBlocks();
+            int blockTotal = process.getBuilding().getVolume();
             double ratio = (double) blockSet / blockTotal;
+            
+            int i = 0;
+            int BARS = 15;
             
             StringBuilder message = new StringBuilder();
             message.append(entry.getKey()).append(" | ").append(process.getBuilding().getName()).append(" [").append(ChatColor.GREEN);
-            for (int i = 0; i < ratio * 10; i++)
+            for (; i < ratio * BARS; i++)
                 message.append("=");
             message.append(ChatColor.WHITE);
-            for (int i = 0; i < 10 - ratio * 10; i++)
+            for (; i < BARS; i++)
                 message.append("=");
             message.append("] ").append((int) (ratio * 100)).append("% ").append(blockSet).append("/").append(blockTotal);
             
@@ -58,7 +61,7 @@ public class BuildProgressCommand extends SubCommand
     @Override
     public void help(CommandSender sender)
     {
-        // TODO Auto-generated method stub
+        // TODO help output
         
     }
 

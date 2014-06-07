@@ -104,7 +104,7 @@ public class Builder extends JavaPlugin implements Listener
     @Override
     public void onDisable()
     {
-        
+        saveProcesses(true);
     }
     
     public Economy getVault()
@@ -120,7 +120,7 @@ public class Builder extends JavaPlugin implements Listener
     private void loadManager()
     {
         ConfigurationSerialization.registerClass(ProcedualBuildingProcess.class);
-        getServer().getPluginManager().registerEvents(this, this);
+        getServer().getPluginManager().registerEvents(new BuildListener(this), this);
         
         buildingFile = new File(getDataFolder(), "buildings.yml");
         buildingConfig = YamlConfiguration.loadConfiguration(buildingFile);
@@ -200,7 +200,7 @@ public class Builder extends JavaPlugin implements Listener
     public boolean hasBuilding(String name)
     {
         for (String b : buildings.keySet())
-            if (b.equalsIgnoreCase(name))
+            if (b.equals(name))
                 return true;
         
         return false;
