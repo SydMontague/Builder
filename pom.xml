@@ -130,11 +130,16 @@
                   <pattern>org.mcstats</pattern>
                   <shadedPattern>de.craftlancer.builder.metrics</shadedPattern>
                 </relocation>
+                <relocation>
+                  <pattern>de.craftlancer.core</pattern>
+                  <shadedPattern>de.craftlancer.core</shadedPattern>
+                </relocation>
               </relocations>
 
               <artifactSet>
                 <includes>
                   <include>org.mcstats.bukkit:*</include>
+                  <include>de.craftlancer:clcore</include>
                 </includes>
               </artifactSet>
             </configuration>
