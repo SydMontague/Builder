@@ -30,16 +30,19 @@ public class BuildPlaceCommand extends SubCommand
         Building build = getPlugin().getBuilding(args[1]);
         
         Player player = (Player) sender;
-
+        
         if (build.isCheckSpace() && !build.checkSpace(player))
             return "Not enough space!";
         
         if (!build.checkCosts(player))
             return "Not enough money!";
         
+        if (!build.checkProtection(player))
+            return "You can't build here!";
+        
         CurrencyHandler.withdrawCurrencies(player, build.getCosts());
         build.startBuilding(player);
-                
+        
         return "Building started!";
     }
     
@@ -49,7 +52,7 @@ public class BuildPlaceCommand extends SubCommand
         // TODO help output
         
     }
-
+    
     @Override
     public Builder getPlugin()
     {

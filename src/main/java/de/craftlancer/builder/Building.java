@@ -16,6 +16,9 @@ import org.bukkit.block.Chest;
 import org.bukkit.block.Sign;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
+import org.bukkit.event.block.BlockCanBuildEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.MaterialData;
 
 import com.sk89q.worldedit.Countable;
@@ -271,6 +274,44 @@ public class Building
                 {
                     Material mat = initialBlock.getRelative(x, y, z).getType();
                     if (mat != null && mat != Material.AIR && !ignoredMaterial.contains(mat))
+                        return false;
+                }
+        
+        return true;
+    }
+    
+    /**
+     * Experimental method to prevent protected zone griefing.
+     * 
+     * I uses the BlockCanBuildEvent and BlockPlaceEvent. If one of these says the player can't build there, it will return false.
+     * 
+     * @param player the player who tries to build
+     * @return true if the area is not protected/usable for him, false otherwise
+     */
+    public boolean checkProtection(Player player)
+    {
+        CuboidClipboard schematic = getRotatedClipboard(player);
+        Block initialBlock = player.getLocation().getBlock().getRelative(schematic.getOffset().getBlockX(), 0, schematic.getOffset().getBlockZ());
+        
+        int xmax = schematic.getWidth();
+        int ymax = schematic.getHeight();
+        int zmax = schematic.getLength();
+        
+        for (int x = 0; x < xmax; x++)
+            for (int y = 0; y < ymax; y++)
+                for (int z = 0; z < zmax; z++)
+                {
+                    Block block = initialBlock.getRelative(x, y, z);
+                    BlockCanBuildEvent canBuild = new BlockCanBuildEvent(block, schematic.getBlock(new Vector(x, y, z)).getType(), true);
+                    Bukkit.getPluginManager().callEvent(canBuild);
+                    
+                    if (!canBuild.isBuildable())
+                        return false;
+                    
+                    BlockPlaceEvent place = new BlockPlaceEvent(block, block.getState(), block, new ItemStack(Material.AIR), player, true);
+                    Bukkit.getPluginManager().callEvent(place);
+                    
+                    if (!place.canBuild() || place.isCancelled())
                         return false;
                 }
         
