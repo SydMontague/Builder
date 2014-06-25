@@ -17,12 +17,12 @@ import de.craftlancer.core.command.CommandHandler;
  */
 public class BuildCommandHandler extends CommandHandler
 {
-    private static final String HELP_PERMISSION = "a";
-    private static final String LIST_PERMISSION = "a";
-    private static final String PREVIEW_PERMISSION = "a";
-    private static final String PLACE_PERMISSION = "a";
-    private static final String UNDO_PERMISSION = "a";
-    private static final String PROGRESS_PERMISSION = "a";
+    private static final String HELP_PERMISSION = "builder.command.help";
+    private static final String LIST_PERMISSION = "builder.command.list";
+    private static final String PREVIEW_PERMISSION = "builder.command.preview";
+    private static final String PLACE_PERMISSION = "builder.command.place";
+    private static final String UNDO_PERMISSION = "builder.command.undo";
+    private static final String PROGRESS_PERMISSION = "builder.command.progress";
     
     public BuildCommandHandler(Plugin plugin)
     {
