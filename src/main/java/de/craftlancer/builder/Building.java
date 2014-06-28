@@ -91,15 +91,13 @@ public class Building
         ticksPerRun = config.getInt("ticksPerRun", 20);
         blocksPerRun = config.getInt("blocksPerRun", 10);
         
-        if (config.isDouble("costs"))
+        if (config.isDouble("costs") || config.isInt("costs"))
         {
             costs = new HashMap<String, Object>();
             costs.put("money", config.getDouble("costs"));
-            Bukkit.getLogger().info("1");
         }
         else if (config.isConfigurationSection("costs"))
         {
-            Bukkit.getLogger().info("2");
             costs.putAll(config.getConfigurationSection("costs").getValues(false));
             
             for (Entry<String, Object> a : costs.entrySet())

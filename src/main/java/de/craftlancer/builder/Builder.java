@@ -57,6 +57,7 @@ import de.craftlancer.builder.commands.BuildCommandHandler;
  *      CommandHandler
  *
  */
+// TODO permissions per building
 public class Builder extends JavaPlugin implements Listener
 {
     private static Builder instance;
@@ -197,13 +198,14 @@ public class Builder extends JavaPlugin implements Listener
         return buildings.values();
     }
     
+    public Collection<String> getBuildingNames()
+    {
+        return buildings.keySet();
+    }
+    
     public boolean hasBuilding(String name)
     {
-        for (String b : buildings.keySet())
-            if (b.equals(name))
-                return true;
-        
-        return false;
+        return buildings.containsKey(name);
     }
     
     public Map<Integer, BuildingProcess> getProcesses()

@@ -1,5 +1,7 @@
 package de.craftlancer.builder.commands;
 
+import java.util.List;
+
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -7,6 +9,7 @@ import org.bukkit.plugin.Plugin;
 
 import de.craftlancer.builder.Builder;
 import de.craftlancer.builder.Building;
+import de.craftlancer.core.Utils;
 import de.craftlancer.core.command.SubCommand;
 
 public class BuildPreviewCommand extends SubCommand
@@ -37,6 +40,17 @@ public class BuildPreviewCommand extends SubCommand
     {
         // TODO help output
         
+    }
+    
+    public List<String> onTabComplete(CommandSender sender, String[] args)
+    {
+        switch (args.length)
+        {
+            case 2:
+                return Utils.getMatches(args[1], getPlugin().getBuildingNames());
+            default:
+                return null;
+        }
     }
     
     @Override
