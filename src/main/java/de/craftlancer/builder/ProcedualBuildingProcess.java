@@ -38,7 +38,6 @@ import de.craftlancer.core.Utils;
 
 public class ProcedualBuildingProcess extends BukkitRunnable implements ConfigurationSerializable, BuildingProcess
 {
-    // TOTEST save to config when not finished
     private UUID owner;
     
     private Building building;
