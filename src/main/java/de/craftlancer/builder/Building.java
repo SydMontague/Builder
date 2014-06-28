@@ -39,6 +39,7 @@ import de.craftlancer.currencyhandler.CurrencyHandler;
  *      costs: <int> (use Vault)
  *          <CurrencyHandler Map> (use CurrencyHandler)
  *      build-type: <INSTANT/PROCEDUAL>
+ *      permission: builder.building.test
  *      <IF build-type == PROCEDUAL>
  *      ticks-per-run: <INT>
  *      blocks-per-run: <INT>
@@ -52,31 +53,32 @@ import de.craftlancer.currencyhandler.CurrencyHandler;
  */
 public class Building
 {
-    private Builder plugin; //
-    private final String name; //
-    private File file; //
-    private String description; //
+    private Builder plugin;
+    private final String name;
+    private File file;
+    private String description;
+    private String perm;
     
-    private HashMap<String, Object> costs = new HashMap<String, Object>(); //
+    private HashMap<String, Object> costs = new HashMap<String, Object>();
     
-    private BuildType buildtype; //
-    private boolean requiresBlocks; //
-    private boolean addProgressSign; //
-    private boolean checkSpace; //
-    private int ticksPerRun; //
-    private int blocksPerRun; //
+    private BuildType buildtype;
+    private boolean requiresBlocks;
+    private boolean addProgressSign;
+    private boolean checkSpace;
+    private int ticksPerRun;
+    private int blocksPerRun;
     
-    private final Direction baseFacing; //
-    private final int numBlocks; //
-    private final int width; //
-    private final int height; //
-    private final int lenght; //
+    private final Direction baseFacing;
+    private final int numBlocks;
+    private final int width;
+    private final int height;
+    private final int lenght;
     private final int volume;
     
-    private CuboidClipboard r0Clip; //
-    private CuboidClipboard r90Clip; //
-    private CuboidClipboard r180Clip; //
-    private CuboidClipboard r270Clip; //
+    private CuboidClipboard r0Clip;
+    private CuboidClipboard r90Clip;
+    private CuboidClipboard r180Clip;
+    private CuboidClipboard r270Clip;
     
     @SuppressWarnings("deprecation")
     public Building(Builder plugin, String key, ConfigurationSection config)
@@ -90,6 +92,7 @@ public class Building
         requiresBlocks = config.getBoolean("requiresBlocks", false);
         ticksPerRun = config.getInt("ticksPerRun", 20);
         blocksPerRun = config.getInt("blocksPerRun", 10);
+        perm = config.getString("permission");
         
         if (config.isDouble("costs") || config.isInt("costs"))
         {
@@ -280,10 +283,10 @@ public class Building
     
     /**
      * Experimental method to prevent protected zone griefing.
-     * 
      * I uses the BlockCanBuildEvent and BlockPlaceEvent. If one of these says the player can't build there, it will return false.
      * 
-     * @param player the player who tries to build
+     * @param player
+     *            the player who tries to build
      * @return true if the area is not protected/usable for him, false otherwise
      */
     public boolean checkProtection(Player player)
@@ -519,5 +522,10 @@ public class Building
     public String getSizeString()
     {
         return width + "x" + height + "x" + lenght;
+    }
+    
+    public String getPermission()
+    {
+        return perm;
     }
 }

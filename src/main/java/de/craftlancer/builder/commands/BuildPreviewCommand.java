@@ -30,6 +30,10 @@ public class BuildPreviewCommand extends SubCommand
             return "You need to specify a valid building!"; // TODO externalise
             
         Building build = getPlugin().getBuilding(args[1]);
+        
+        if (!sender.hasPermission(build.getPermission()))
+            return "You don't have the permissions for this building!";
+        
         build.createPreview((Player) sender);
         
         return "Showing preview for building \"" + build.getName() + "\""; // TODO externalise

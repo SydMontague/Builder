@@ -57,7 +57,6 @@ import de.craftlancer.builder.commands.BuildCommandHandler;
  *      CommandHandler
  *
  */
-// TODO permissions per building
 public class Builder extends JavaPlugin implements Listener
 {
     private static Builder instance;

@@ -34,6 +34,9 @@ public class BuildPlaceCommand extends SubCommand
         
         Player player = (Player) sender;
         
+        if (!sender.hasPermission(build.getPermission()))
+            return "You don't have the permissions for this building!";
+        
         if (build.isCheckSpace() && !build.checkSpace(player))
             return "Not enough space!";
         
